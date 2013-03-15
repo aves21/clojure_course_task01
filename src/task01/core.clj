@@ -3,31 +3,34 @@
   (:gen-class))
 
 
-(defn- link? [vect]
-  (= "r" (:class (get vect 1) )))
+(defn mapfilter [filterfun mapfun  coll]
+(filter filterfun (map mapfun coll)))
 
-(defn- get-href [vect]
-  ( :href ( get (get vect 2) 1)))
+(defn mapcatfilter [filterfun mapfun  coll]
+(filter filterfun (mapcat mapfun coll)))
 
-(defn- rrest [vect]
-  (rest (rest vect)))
+(defn- link [vect]
+  (if (and
+        (= :h3 ( first vect))
+        (= "r" (get-in vect [1 :class])))
+    ( get-in vect [2 1 :href])
+    nil))
 
-(defn- not-empty-vector? [vect]
-  (and (vector? vect) ( not (empty? vect))))
+(defn- get-hrefs [tags]
+  (mapfilter #(not (nil? %)) link  tags))
 
+
+(defn- get-all-links [ func data]
+  (loop [tags  data
+         hrefs '()]
+    (if ( empty? tags )
+      hrefs
+      (recur (mapcatfilter vector? nnext tags )
+             (into hrefs (func  tags))))))
 
 (defn get-links []
   (let [data ( conj '() (parse "clojure_google.html"))]
-    (loop [ tags  data
-            hrefs '()]
-      (if (or ( empty? tags) (= 10 (count hrefs)))
-        hrefs
-        (recur (filter  not-empty-vector?
-                 (reduce concat 
-                   (map rrest tags )))
-               (into hrefs
-                 (map get-href
-                   (filter  link?  tags))))))))
+    (get-all-links get-hrefs data)))
 
 (defn -main []
   (println (str "Found " (count (get-links)) " links!")))

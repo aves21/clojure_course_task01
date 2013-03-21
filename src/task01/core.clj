@@ -17,7 +17,7 @@
   (loop [tags  data
          hrefs '()]
     (if (empty? tags) hrefs
-        (recur (mapcat #(remove #(not (vector? %)) (nnext %)) tags)
+        (recur (mapcat #(remove (comp not vector?) (nnext %)) tags)
                  (into hrefs (func  tags))))))
 
 (defn get-links []
